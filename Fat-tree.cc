@@ -38,6 +38,7 @@
 #include "ns3/csma-module.h"
 #include "ns3/ipv4-nix-vector-helper.h"
 //#include "ns3/random-variable.h"
+#include "ns3/random-variable-stream.h"
 
 /*
 	- This work goes along with the paper "Towards Reproducible Performance Studies of Datacenter Network Architectures Using An Open-Source Simulation Approach"
@@ -150,7 +151,8 @@ int
 // Initialize parameters for On/Off application
 //
 	int port = 9;
-	int packetSize = 1024;		// 1024 bytes
+	//int packetSize = 1024;		// 1024 bytes
+	int packetSize = 2048;		// 1024 bytes
 	char dataRate_OnOff [] = "1Mbps";
 	char maxBytes [] = "0";		// unlimited
 
@@ -226,7 +228,11 @@ int
 	// Initialize On/Off Application with addresss of server
 		OnOffHelper oo = OnOffHelper("ns3::UdpSocketFactory",Address(InetSocketAddress(Ipv4Address(add), port))); // ip address of server
 	        //oo.SetAttribute("OnTime",RandomVariableValue(ExponentialVariable(1)));  
-	        //oo.SetAttribute("OffTime",RandomVariableValue(ExponentialVariable(1))); 
+			//oo.SetAttribute("OffTime",ns3::RandomVariableValue(ExponentialVariable(1))); 
+
+			//oo.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1]")); 
+			//oo.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0]")); 
+		
  	        oo.SetAttribute("PacketSize",UintegerValue (packetSize));
  	       	oo.SetAttribute("DataRate",StringValue (dataRate_OnOff));      
 	        oo.SetAttribute("MaxBytes",StringValue (maxBytes));
@@ -289,7 +295,8 @@ int
 			char *subnet;
 			subnet = toString(10, i, j, 0);
 			address.SetBase (subnet, "255.255.255.0");
-			ipContainer[i][j] = address.Assign(hostSw[i][j]);			
+			ipContainer[i][j] = address.Assign(hostSw[i][j]);
+			std::cout <<"\t Pod: "<<i<<"\t bridge "<<j<<"\t subnet "<<subnet<<"\n";		
 		}
 	}
 	std::cout << "Finished connecting edge switches and hosts  "<< "\n";
@@ -316,6 +323,8 @@ int
 				base = toString(0, 0, 0, fourth_octet);
 				address.SetBase (subnet, "255.255.255.0",base);
 				ipAeContainer[i][j][h] = address.Assign(ae[i][j][h]);
+
+				std::cout <<"\t Pod: "<<i<<"\t agg "<<j<<"\t edge "<<h<<"\t subnet "<<subnet<<"\n";
 			}			
 		}		
 	}
@@ -344,6 +353,8 @@ int
 				address.SetBase (subnet, "255.255.255.0",base);
 				ipCaContainer[i][j][h] = address.Assign(ca[i][j][h]);
 				fourth_octet +=2;
+
+				std::cout <<"\t Group: "<<i<<"\t Core "<<j<<"\t pod "<<h<<"\t subnet "<<subnet<<"\n";
 			}
 		}
 	}
@@ -356,9 +367,12 @@ int
 	std::cout << "Start Simulation.. "<<"\n";
 	for (i=0;i<total_host;i++){
 		app[i].Start (Seconds (0.0));
-  		app[i].Stop (Seconds (100.0));
+  		app[i].Stop (Seconds (10.0));
 	}
   	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+	Ipv4GlobalRoutingHelper g;
+	Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("dynamic-global-routing.routes", std::ios::out);
+	g.PrintRoutingTableAllAt (Seconds (8), routingStream);  	
 // Calculate Throughput using Flowmonitor
 //
   	FlowMonitorHelper flowmon;
@@ -366,13 +380,16 @@ int
 // Run simulation.
 //
   	NS_LOG_INFO ("Run Simulation.");
-  	Simulator::Stop (Seconds(101.0));
+  	Simulator::Stop (Seconds(11.0));
   	Simulator::Run ();
 
   	monitor->CheckForLostPackets ();
   	monitor->SerializeToXmlFile(filename, true, true);
 
 	std::cout << "Simulation finished "<<"\n";
+
+	// Trace routing tables 
+
 
   	Simulator::Destroy ();
   	NS_LOG_INFO ("Done.");
