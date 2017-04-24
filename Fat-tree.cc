@@ -386,6 +386,27 @@ int
   	monitor->CheckForLostPackets ();
   	monitor->SerializeToXmlFile(filename, true, true);
 
+  	Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier());
+  	FlowMonitor::FlowStatsContainer stats = monitor->GetFlowStats ();
+	for	(std::map<FlowId,	FlowMonitor::FlowStats>::const_iterator	itr	=	stats.begin	();	itr	!=	stats.end();	++itr)	
+	{	
+		if	(itr->first	> 0)	
+		{	
+			Ipv4FlowClassifier::FiveTuple	t	=	classifier->FindFlow(itr->first);	
+			std::cout	<<	"Flow	"	<<	itr->first	<<	"	("	<<	t.sourceAddress	<<	"	->	"	<<	t.destinationAddress	<<	")";	
+			//std::cout	<<	"	Tx	Packets:	"	<<	itr->second.txPackets	<<	"\n";	
+			//std::cout	<<	"	Tx	Bytes:	"	<<	itr->second.txBytes	<<	"\n";	
+			//std::cout	<<	"	TxOffered:	"	<<	itr->second.txBytes	*	8.0	/	9.0	/	1000	/	1000	<<	"	Mbps\n";	
+			//std::cout	<<	"	Rx	Packets:	"	<<	itr->second.rxPackets	<<	"\n";	
+			//std::cout	<<	"	Rx	Bytes:	"	<<	itr->second.rxBytes	<<	"\n";	
+			//std::cout	<<	"	Throughput:	"	<<	itr->second.rxBytes	*	8.0	/	9.0	/	1000	/	1000	<<	"	Mbps\n";	
+			//std::cout 	<<  " Avg path latency " << (itr->second.delaySum) / (float(itr->second.rxPackets) * 1000) <<" us\n";
+
+			std::cout	<<	"\t"	<<	itr->second.rxBytes	*	8.0	/	9.0	/	1000	/	1000	<<	"	Mbps";	
+			std::cout 	<<  "\t" 	<< (itr->second.delaySum) / (float(itr->second.rxPackets)) <<"\n";			
+			break;
+		}	
+	}	
 	std::cout << "Simulation finished "<<"\n";
 
 	// Trace routing tables 
