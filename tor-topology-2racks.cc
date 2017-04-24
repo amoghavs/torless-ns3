@@ -96,8 +96,8 @@ int main (int argc, char *argv[])
   std::string flow_name ("n-node-ppp-tor.xml");
   std::string anim_name ("n-node-ppp-tor.anim.xml");
 
-  std::string adj_mat_file_name ("scratch/adjacency_matrix-2.txt");
-  std::string node_coordinates_file_name ("scratch/node_coordinates-2.txt");
+  std::string adj_mat_file_name ("scratch/tor_matrix.txt");
+  std::string node_coordinates_file_name ("scratch/tor_node_coordinates.txt");
 
   CommandLine cmd;
   cmd.Parse (argc, argv);

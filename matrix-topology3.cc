@@ -91,13 +91,13 @@ int main (int argc, char *argv[])
 
   srand ( (unsigned)time ( NULL ) );   // generate different seed each time
 
-  std::string tr_name ("n-node-ppp-torless.tr");
-  std::string pcap_name ("n-node-ppp-torless");
-  std::string flow_name ("n-node-ppp-torless.xml");
-  std::string anim_name ("n-node-ppp-torless.anim.xml");
+  std::string tr_name ("n-node-ppp-tor.tr");
+  std::string pcap_name ("n-node-ppp-tor");
+  std::string flow_name ("n-node-ppp-tor.xml");
+  std::string anim_name ("n-node-ppp-tor.anim.xml");
 
-  std::string adj_mat_file_name ("scratch/torless_matrix.txt");
-  std::string node_coordinates_file_name ("scratch/torless_node_coordinates.txt");
+  std::string adj_mat_file_name ("scratch/adjacency_matrix_torless_3.txt");
+  std::string node_coordinates_file_name ("scratch/node_coordinates_torless_3.txt");
 
   CommandLine cmd;
   cmd.Parse (argc, argv);
@@ -286,9 +286,9 @@ int main (int argc, char *argv[])
 	    snprintf ( buffer, 100, "Core-Switch");
     } else if (i == 1)  {
 	    snprintf ( buffer, 100, "Agg-Switch1");
-    } else if (i == 17) {
+    } else if (i == 2) {
 	    snprintf ( buffer, 100, "Agg-Switch2");
-    } else if (i < 17)
+    } else if (i < 18)
 	    snprintf ( buffer, 100, "R1-%ld", i-1);
     else {
 	    snprintf ( buffer, 100, "R2-%ld", i-17);
