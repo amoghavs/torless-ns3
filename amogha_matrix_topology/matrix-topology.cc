@@ -83,10 +83,10 @@ int main (int argc, char *argv[])
   double AppStopTime    = 2.80001;*/
 
   double SimTime        = 10.00;
-  double SinkStartTime  = 1.0001;
+  double SinkStartTime  = 2.0001;
   double SinkStopTime   = 8.90001;
-  double AppStartTime   = 1.5001;
-  double AppStopTime    = 7.80001;
+  double AppStartTime   = 3.0001;
+  double AppStopTime    = 8.00001;
   double AppRunTime = AppStopTime - AppStartTime;
 
   std::string AppPacketRate ("40Kbps");
@@ -300,6 +300,8 @@ int main (int argc, char *argv[])
   ipv46->SetForwarding(6,true);ipv46->SetForwarding(7,true);ipv46->SetForwarding(8,true);
   Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 0);
   Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 1);
+  //Simulator::Schedule (Seconds (2),&Ipv4GlobalRoutingHelper::RecomputeRoutingTables);
+
   /*Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 2);
   Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 3);
   Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 4);
