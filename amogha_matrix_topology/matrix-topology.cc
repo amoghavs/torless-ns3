@@ -55,6 +55,7 @@
 #include "ns3/netanim-module.h"
 #include "ns3/assert.h"
 #include "ns3/ipv4-global-routing-helper.h"
+#include "ns3/flow-monitor-module.h"
 
 using namespace std;
 using namespace ns3;
@@ -75,11 +76,18 @@ int main (int argc, char *argv[])
 
   // Change the variables and file names only in this block!
 
-  double SimTime        = 3.00;
+  /*double SimTime        = 3.00;
   double SinkStartTime  = 1.0001;
   double SinkStopTime   = 2.90001;
   double AppStartTime   = 2.0001;
-  double AppStopTime    = 2.80001;
+  double AppStopTime    = 2.80001;*/
+
+  double SimTime        = 10.00;
+  double SinkStartTime  = 1.0001;
+  double SinkStopTime   = 8.90001;
+  double AppStartTime   = 1.5001;
+  double AppStopTime    = 7.80001;
+  double AppRunTime = AppStopTime - AppStartTime;
 
   std::string AppPacketRate ("40Kbps");
   Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("1000"));
@@ -182,7 +190,11 @@ int main (int argc, char *argv[])
   NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
   NS_LOG_INFO ("Number of all nodes is: " << nodes.GetN ());
 
+  std::cout<<"Number of links in the adjacency matrix is: " << linkCount;
+  std::cout<<" Number of all nodes is: " << nodes.GetN ()<<"\n";
+
   NS_LOG_INFO ("Initialize Global Routing.");
+  Config::SetDefault ("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents", BooleanValue (true));
   Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
   // ---------- End of Network Set-up ----------------------------------------
@@ -229,6 +241,10 @@ int main (int argc, char *argv[])
       ApplicationContainer apps_sink = sink.Install (nodes.Get (i));   // sink is installed on all nodes
       apps_sink.Start (Seconds (SinkStartTime));
       apps_sink.Stop (Seconds (SinkStopTime));
+
+      Ptr<Node> n = nodes.Get (i);
+      Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();      
+      std::cout<<"\t node "<<i<<"\t n_interfaces "<<ipv4->GetNInterfaces()<<"\n";
     }
 
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
@@ -258,6 +274,8 @@ int main (int argc, char *argv[])
               ApplicationContainer apps = onoff.Install (nodes.Get (i));  // traffic sources are installed on all nodes
               apps.Start (Seconds (AppStartTime + rn));
               apps.Stop (Seconds (AppStopTime));
+              if(j==6)
+                std::cout<<"\t j "<<j<<"\t ip_addr "<<ip_addr<<"\t n_interfaces "<<ipv4->GetNInterfaces()<<"\n";
             }
         }
     }
@@ -272,18 +290,58 @@ int main (int argc, char *argv[])
   p2p.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
   // p2p.EnablePcapAll (pcap_name.c_str());
 
-  // Ptr<FlowMonitor> flowmon;
-  // FlowMonitorHelper flowmonHelper;
-  // flowmon = flowmonHelper.InstallAll ();
+  Ptr<Node> n6 = nodes.Get (6);
+  Ptr<Ipv4> ipv46 = n6->GetObject<Ipv4> ();
+  //uint32_t ipv4ifIndex6 = 1;
 
+  std::cout<<"\t Num interfaces - n6 "<<(ipv46->GetNInterfaces())<<"\n";
+  ipv46->SetForwarding(0,true);ipv46->SetForwarding(1,true);ipv46->SetForwarding(2,true);
+  ipv46->SetForwarding(3,true);ipv46->SetForwarding(4,true);ipv46->SetForwarding(5,true);
+  ipv46->SetForwarding(6,true);ipv46->SetForwarding(7,true);ipv46->SetForwarding(8,true);
+  Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 0);
+  Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 1);
+  /*Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 2);
+  Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 3);
+  Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 4);
+  Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 5);
+  Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 6);
+  Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 7);
+  Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 8);*/
+  //Simulator::Schedule (Seconds (18),&Ipv4::SetUp,ipv46, ipv4ifIndex6);
+
+  Ptr<FlowMonitor> flowmon;
+  FlowMonitorHelper flowmonHelper;
+  flowmon = flowmonHelper.InstallAll ();
   // Configure animator with default settings
 
   AnimationInterface anim (anim_name.c_str ());
   NS_LOG_INFO ("Run Simulation.");
+  std::cout<<"Run simulation for "<<SimTime<<" seconds\n";
 
   Simulator::Stop (Seconds (SimTime));
   Simulator::Run ();
-  // flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
+  flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
+
+  Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmonHelper.GetClassifier());
+  FlowMonitor::FlowStatsContainer stats = flowmon->GetFlowStats ();
+  double avgLatency_allFlows = 0.0f; double avgThroughput_allFlows = 0.0f; double temp = 0.0; int count = 0;
+  for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator itr = stats.begin (); itr !=  stats.end();  ++itr)  
+  { 
+    if  (itr->first > 0)  
+    { 
+      Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(itr->first); 
+      std::cout <<  "Flow " <<  itr->first  <<  " ("  <<  t.sourceAddress <<  " ->  " <<  t.destinationAddress  <<  ")"; 
+      std::cout << "\t"   << itr->second.rxBytes;
+      std::cout << "\t"   << itr->second.rxPackets; 
+      temp =  itr->second.rxBytes * 8.0 / AppRunTime / 1000  / 1000; avgLatency_allFlows+=temp;
+      std::cout <<  "\t"  <<  temp <<  " Mbps";  
+      temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); avgThroughput_allFlows+=temp;
+      std::cout   <<  "\t"  << temp <<"\n";      
+      count+=1;
+      break;
+    } 
+  }   
+  std::cout<<"\t avgLatency_allFlows "<< (avgLatency_allFlows/count)<<"\t avgThroughput_allFlows "<<(avgThroughput_allFlows/count)<<"\n";
   Simulator::Destroy ();
 
   // ---------- End of Simulation Monitoring ---------------------------------
