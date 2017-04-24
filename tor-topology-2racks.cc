@@ -55,6 +55,7 @@
 #include "ns3/netanim-module.h"
 #include "ns3/assert.h"
 #include "ns3/ipv4-global-routing-helper.h"
+#include "ns3/flow-monitor-module.h"
 
 using namespace std;
 using namespace ns3;
@@ -75,11 +76,13 @@ int main (int argc, char *argv[])
 
   // Change the variables and file names only in this block!
 
-  double SimTime        = 3.00;
-  double SinkStartTime  = 1.0001;
-  double SinkStopTime   = 2.90001;
-  double AppStartTime   = 2.0001;
-  double AppStopTime    = 2.80001;
+  double SimTime        = 10.00;
+  double SinkStartTime  = 2.0001;
+  double SinkStopTime   = 8.90001;
+  double AppStartTime   = 3.0001;
+  double AppStopTime    = 8.00001;
+  double AppRunTime = AppStopTime - AppStartTime;
+
 
   std::string AppPacketRate ("40Kbps");
   Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("1000"));
@@ -273,15 +276,15 @@ int main (int argc, char *argv[])
   p2p.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
   // p2p.EnablePcapAll (pcap_name.c_str());
 
-  // Ptr<FlowMonitor> flowmon;
-  // FlowMonitorHelper flowmonHelper;
-  // flowmon = flowmonHelper.InstallAll ();
+  Ptr<FlowMonitor> flowmon;
+  FlowMonitorHelper flowmonHelper;
+  flowmon = flowmonHelper.InstallAll ();
 
   // Configure animator with default settings
 
   AnimationInterface anim (anim_name.c_str ());
   char buffer [100];
-  for (size_t i = 0; i < n_nodes; i++) {
+  for (int i = 0; i < n_nodes; i++) {
     if (i== 0) {
 	    snprintf ( buffer, 100, "Core-Switch");
     } else if (i == 1)  {
@@ -300,6 +303,29 @@ int main (int argc, char *argv[])
   Simulator::Stop (Seconds (SimTime));
   Simulator::Run ();
   // flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
+  flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
+
+  Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmonHelper.GetClassifier());
+  FlowMonitor::FlowStatsContainer stats = flowmon->GetFlowStats ();
+  double avgLatency_allFlows = 0.0f; double avgThroughput_allFlows = 0.0f; double temp = 0.0; int count = 0;
+  for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator itr = stats.begin (); itr !=  stats.end();  ++itr)  
+  { 
+    if  (itr->first > 0)  
+    { 
+      Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(itr->first); 
+      std::cout <<  "Flow " <<  itr->first  <<  " ("  <<  t.sourceAddress <<  " ->  " <<  t.destinationAddress  <<  ")"; 
+      std::cout << "\t"   << itr->second.rxBytes;
+      std::cout << "\t"   << itr->second.rxPackets; 
+      temp =  itr->second.rxBytes * 8.0 / AppRunTime / 1000  / 1000; avgLatency_allFlows+=temp;
+      std::cout <<  "\t"  <<  temp <<  " Mbps";  
+      temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); avgThroughput_allFlows+=temp;
+      std::cout   <<  "\t"  << temp <<"\n";      
+      count+=1;
+      break;
+    } 
+  }   
+  std::cout<<"\t avgLatency_allFlows "<< (avgLatency_allFlows/count)<<"\t avgThroughput_allFlows "<<(avgThroughput_allFlows/count)<<"\n";
+ 
   Simulator::Destroy ();
 
   // ---------- End of Simulation Monitoring ---------------------------------
@@ -322,7 +348,6 @@ vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name)
   vector<vector<bool> > array;
   int i = 0;
   int n_nodes = 0;
-  int count = 0;
 
   while (!adj_mat_file.eof ())
     {
