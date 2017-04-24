@@ -292,9 +292,9 @@ int main (int argc, char *argv[])
     } else if (i == 2) {
 	    snprintf ( buffer, 100, "Agg-Switch2");
     } else if (i < 18)
-	    snprintf ( buffer, 100, "R1-%ld", i-1);
+	    snprintf ( buffer, 100, "R1-%d", i-1);
     else {
-	    snprintf ( buffer, 100, "R2-%ld", i-17);
+	    snprintf ( buffer, 100, "R2-%d", i-17);
     }
     anim.UpdateNodeDescription(nodes.Get(i), buffer);
   }
