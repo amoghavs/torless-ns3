@@ -4,6 +4,9 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <cstdio>
+#include <cfloat>
+#include <cstddef>
 
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
@@ -22,6 +25,11 @@ using namespace ns3;
 void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> classifier, double AppRunTime)
 {
 	double avgLatency_allFlows = 0.0f; double avgThroughput_allFlows = 0.0f; double temp = 0.0; int count = 0;
+	double minLatency = DBL_MAX;
+	double maxLatency = 0;
+	double minThroughput = DBL_MAX;
+	double maxThroughput = 0;
+
 	for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator itr = stats.begin (); itr !=  stats.end();  ++itr)  
 	{ 
 		if  (itr->first > 0)  
@@ -31,11 +39,22 @@ void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> 
 			std::cout << "\t"   << itr->second.rxBytes;
 			std::cout << "\t"   << itr->second.rxPackets; 
 			temp =  itr->second.rxBytes * 8.0 / AppRunTime / 1000  / 1000;  avgThroughput_allFlows+=temp;
+			if (temp > maxThroughput)
+				maxThroughput = temp;
+			if (temp < minThroughput)
+				minThroughput = temp;
 			std::cout <<  "\t"  <<  temp <<  " Mbps";  
 			temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); avgLatency_allFlows+=temp;
+			if (temp > maxLatency)
+				maxLatency = temp;
+			if (temp < minLatency)
+				minLatency = temp;
 			std::cout   <<  "\t"  << temp <<"\n";      
 			count+=1;
 		} 
 	}   
-	std::cout<<"\t avgLatency_allFlows "<< (avgLatency_allFlows/count)<<"\t avgThroughput_allFlows "<<(avgThroughput_allFlows/count)<<"\n";
-} 
+	double avgLatency = (avgLatency_allFlows/count);
+	double avgThroughput = (avgThroughput_allFlows/count);
+	printf("Avg latency = %lf, min latency = %lf, max latency = %lf\n", avgLatency, minLatency, maxLatency); 
+	printf("Avg thoughput = %lf, min thoughput = %lf, max thoughput = %lf\n", avgThroughput, minThroughput, maxThroughput); 
+}
