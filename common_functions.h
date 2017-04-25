@@ -22,6 +22,19 @@
 
 using namespace std;
 using namespace ns3;
+double SimTime        = 10.00;
+double SinkStartTime  = 2.0001;
+double SinkStopTime   = 8.90001;
+double AppStartTime   = 3.0001;
+double AppStopTime    = 4.00001;
+double AppRunTime = AppStopTime - AppStartTime;
+std::string AppPacketRate ("80Kbps");
+int AppPacketSize = 10000;
+std::string LinkRate ("10Mbps");
+std::string LinkDelay ("2ms");
+ 
+
+
 void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> classifier, double AppRunTime)
 {
 	double avgLatency_allFlows = 0.0f; double avgThroughput_allFlows = 0.0f; double temp = 0.0; int count = 0;
@@ -29,27 +42,30 @@ void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> 
 	double maxLatency = 0;
 	double minThroughput = DBL_MAX;
 	double maxThroughput = 0;
-
+	long int totalPackets = 0;
 	for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator itr = stats.begin (); itr !=  stats.end();  ++itr)  
 	{ 
 		if  (itr->first > 0)  
 		{ 
 			Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(itr->first); 
+			/*
 			std::cout <<  "Flow " <<  itr->first  <<  " ("  <<  t.sourceAddress <<  " ->  " <<  t.destinationAddress  <<  ")"; 
 			std::cout << "\t"   << itr->second.rxBytes;
 			std::cout << "\t"   << itr->second.rxPackets; 
+			*/
+			totalPackets += itr->second.rxPackets;
 			temp =  itr->second.rxBytes * 8.0 / AppRunTime / 1000  / 1000;  avgThroughput_allFlows+=temp;
 			if (temp > maxThroughput)
 				maxThroughput = temp;
 			if (temp < minThroughput)
 				minThroughput = temp;
-			std::cout <<  "\t"  <<  temp <<  " Mbps";  
+			//std::cout <<  "\t"  <<  temp <<  " Mbps";  
 			temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); avgLatency_allFlows+=temp;
 			if (temp > maxLatency)
 				maxLatency = temp;
 			if (temp < minLatency)
 				minLatency = temp;
-			std::cout   <<  "\t"  << temp <<"\n";      
+			//std::cout   <<  "\t"  << temp <<"\n";      
 			count+=1;
 		} 
 	}   
@@ -57,4 +73,5 @@ void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> 
 	double avgThroughput = (avgThroughput_allFlows/count);
 	printf("Avg latency = %lf, min latency = %lf, max latency = %lf\n", avgLatency, minLatency, maxLatency); 
 	printf("Avg thoughput = %lf, min thoughput = %lf, max thoughput = %lf\n", avgThroughput, minThroughput, maxThroughput); 
+	printf("Total Packets = %ld\n", totalPackets);
 }

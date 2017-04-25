@@ -77,20 +77,8 @@ int main (int argc, char *argv[])
 
 		// Change the variables and file names only in this block!
 
-		double SimTime        = 10.00;
-		double SinkStartTime  = 2.0001;
-		double SinkStopTime   = 8.90001;
-		double AppStartTime   = 3.0001;
-		double AppStopTime    = 8.00001;
-		double AppRunTime = AppStopTime - AppStartTime;
-
-
-
-		std::string AppPacketRate ("40Kbps");
 		Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("1000"));
 		Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
-		std::string LinkRate ("10Mbps");
-		std::string LinkDelay ("2ms");
 		//  DropTailQueue::MaxPackets affects the # of dropped packets, default value:100
 		//  Config::SetDefault ("ns3::DropTailQueue::MaxPackets", UintegerValue (1000));
 
@@ -116,7 +104,7 @@ int main (int argc, char *argv[])
 
 
 		// Optionally display 2-dimensional adjacency matrix (Adj_Matrix) array
-		printMatrix (adj_mat_file_name.c_str (),Adj_Matrix);
+		//printMatrix (adj_mat_file_name.c_str (),Adj_Matrix);
 
 		// ---------- End of Read Adjacency Matrix ---------------------------------
 
