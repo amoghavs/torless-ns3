@@ -77,7 +77,7 @@ int main (int argc, char *argv[])
 
 		// Change the variables and file names only in this block!
 
-		Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("1000"));
+		Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("2000"));
 		Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
 		//  DropTailQueue::MaxPackets affects the # of dropped packets, default value:100
 		//  Config::SetDefault ("ns3::DropTailQueue::MaxPackets", UintegerValue (1000));
