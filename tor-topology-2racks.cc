@@ -56,6 +56,7 @@
 #include "ns3/assert.h"
 #include "ns3/ipv4-global-routing-helper.h"
 #include "ns3/flow-monitor-module.h"
+#include "common_functions.h"
 
 using namespace std;
 using namespace ns3;
@@ -72,265 +73,248 @@ NS_LOG_COMPONENT_DEFINE ("GenericTopologyCreation");
 int main (int argc, char *argv[])
 {
 
-  // ---------- Simulation Variables ------------------------------------------
+	// ---------- Simulation Variables ------------------------------------------
 
-  // Change the variables and file names only in this block!
+	// Change the variables and file names only in this block!
 
-  double SimTime        = 10.00;
-  double SinkStartTime  = 2.0001;
-  double SinkStopTime   = 8.90001;
-  double AppStartTime   = 3.0001;
-  double AppStopTime    = 8.00001;
-  double AppRunTime = AppStopTime - AppStartTime;
-
-
-  std::string AppPacketRate ("40Kbps");
-  Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("1000"));
-  Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
-  std::string LinkRate ("10Mbps");
-  std::string LinkDelay ("2ms");
-  //  DropTailQueue::MaxPackets affects the # of dropped packets, default value:100
-  //  Config::SetDefault ("ns3::DropTailQueue::MaxPackets", UintegerValue (1000));
-
-  srand ( (unsigned)time ( NULL ) );   // generate different seed each time
-
-  std::string tr_name ("n-node-ppp-tor.tr");
-  std::string pcap_name ("n-node-ppp-tor");
-  std::string flow_name ("n-node-ppp-tor.xml");
-  std::string anim_name ("n-node-ppp-tor.anim.xml");
-
-  std::string adj_mat_file_name ("scratch/tor_matrix.txt");
-  std::string node_coordinates_file_name ("scratch/tor_node_coordinates.txt");
-
-  CommandLine cmd;
-  cmd.Parse (argc, argv);
-  
-  // ---------- End of Simulation Variables ----------------------------------
-
-  // ---------- Read Adjacency Matrix ----------------------------------------
-
-  vector<vector<bool> > Adj_Matrix;
-  Adj_Matrix = readNxNMatrix (adj_mat_file_name);
+	double SimTime        = 10.00;
+	double SinkStartTime  = 2.0001;
+	double SinkStopTime   = 8.90001;
+	double AppStartTime   = 3.0001;
+	double AppStopTime    = 8.00001;
+	double AppRunTime = AppStopTime - AppStartTime;
 
 
-  // Optionally display 2-dimensional adjacency matrix (Adj_Matrix) array
-  printMatrix (adj_mat_file_name.c_str (),Adj_Matrix);
+	std::string AppPacketRate ("40Kbps");
+	Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("1000"));
+	Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
+	std::string LinkRate ("10Mbps");
+	std::string LinkDelay ("2ms");
+	//  DropTailQueue::MaxPackets affects the # of dropped packets, default value:100
+	//  Config::SetDefault ("ns3::DropTailQueue::MaxPackets", UintegerValue (1000));
 
-  // ---------- End of Read Adjacency Matrix ---------------------------------
+	srand ( (unsigned)time ( NULL ) );   // generate different seed each time
 
-  // ---------- Read Node Coordinates File -----------------------------------
+	std::string tr_name ("n-node-ppp-tor.tr");
+	std::string pcap_name ("n-node-ppp-tor");
+	std::string flow_name ("n-node-ppp-tor.xml");
+	std::string anim_name ("n-node-ppp-tor.anim.xml");
 
-  vector<vector<double> > coord_array;
-  coord_array = readCordinatesFile (node_coordinates_file_name);
+	std::string adj_mat_file_name ("scratch/tor_matrix.txt");
+	std::string node_coordinates_file_name ("scratch/tor_node_coordinates.txt");
 
-  // Optionally display node co-ordinates file
-  // printCoordinateArray (node_coordinates_file_name.c_str (),coord_array);
+	CommandLine cmd;
+	cmd.Parse (argc, argv);
 
-  int n_nodes = coord_array.size ();
-  int matrixDimension = Adj_Matrix.size ();
+	// ---------- End of Simulation Variables ----------------------------------
 
-  if (matrixDimension != n_nodes)
-    {
-      NS_FATAL_ERROR ("The number of lines in coordinate file is: " << n_nodes << " not equal to the number of nodes in adjacency matrix size " << matrixDimension);
-    }
+	// ---------- Read Adjacency Matrix ----------------------------------------
 
-  // ---------- End of Read Node Coordinates File ----------------------------
+	vector<vector<bool> > Adj_Matrix;
+	Adj_Matrix = readNxNMatrix (adj_mat_file_name);
 
-  // ---------- Network Setup ------------------------------------------------
 
-  NS_LOG_INFO ("Create Nodes.");
+	// Optionally display 2-dimensional adjacency matrix (Adj_Matrix) array
+	printMatrix (adj_mat_file_name.c_str (),Adj_Matrix);
 
-  NodeContainer nodes;   // Declare nodes objects
-  nodes.Create (n_nodes);
+	// ---------- End of Read Adjacency Matrix ---------------------------------
 
-  NS_LOG_INFO ("Create P2P Link Attributes.");
+	// ---------- Read Node Coordinates File -----------------------------------
 
-  PointToPointHelper p2p;
-  p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
-  p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+	vector<vector<double> > coord_array;
+	coord_array = readCordinatesFile (node_coordinates_file_name);
 
-  NS_LOG_INFO ("Install Internet Stack to Nodes.");
+	// Optionally display node co-ordinates file
+	// printCoordinateArray (node_coordinates_file_name.c_str (),coord_array);
 
-  InternetStackHelper internet;
-  internet.Install (NodeContainer::GetGlobal ());
+	int n_nodes = coord_array.size ();
+	int matrixDimension = Adj_Matrix.size ();
 
-  NS_LOG_INFO ("Assign Addresses to Nodes.");
+	if (matrixDimension != n_nodes)
+	{
+		NS_FATAL_ERROR ("The number of lines in coordinate file is: " << n_nodes << " not equal to the number of nodes in adjacency matrix size " << matrixDimension);
+	}
 
-  Ipv4AddressHelper ipv4_n;
-  ipv4_n.SetBase ("10.0.0.0", "255.255.255.252");
+	// ---------- End of Read Node Coordinates File ----------------------------
 
-  NS_LOG_INFO ("Create Links Between Nodes.");
+	// ---------- Network Setup ------------------------------------------------
 
-  uint32_t linkCount = 0;
+	NS_LOG_INFO ("Create Nodes.");
 
-  for (size_t i = 0; i < Adj_Matrix.size (); i++)
-    {
-      for (size_t j = 0; j < Adj_Matrix[i].size (); j++)
-        {
+	NodeContainer nodes;   // Declare nodes objects
+	nodes.Create (n_nodes);
 
-          if (Adj_Matrix[i][j] == 1)
-            {
-              NodeContainer n_links = NodeContainer (nodes.Get (i), nodes.Get (j));
-              NetDeviceContainer n_devs = p2p.Install (n_links);
-              ipv4_n.Assign (n_devs);
-              ipv4_n.NewNetwork ();
-              linkCount++;
-              NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
-            }
-          else
-            {
-              NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 0");
-            }
-        }
-    }
-  NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
-  NS_LOG_INFO ("Number of all nodes is: " << nodes.GetN ());
+	NS_LOG_INFO ("Create P2P Link Attributes.");
 
-  NS_LOG_INFO ("Initialize Global Routing.");
-  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+	PointToPointHelper p2p;
+	p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
+	p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
-  // ---------- End of Network Set-up ----------------------------------------
+	NS_LOG_INFO ("Install Internet Stack to Nodes.");
 
-  // ---------- Allocate Node Positions --------------------------------------
+	InternetStackHelper internet;
+	internet.Install (NodeContainer::GetGlobal ());
 
-  NS_LOG_INFO ("Allocate Positions to Nodes.");
+	NS_LOG_INFO ("Assign Addresses to Nodes.");
 
-  MobilityHelper mobility_n;
-  Ptr<ListPositionAllocator> positionAlloc_n = CreateObject<ListPositionAllocator> ();
+	Ipv4AddressHelper ipv4_n;
+	ipv4_n.SetBase ("10.0.0.0", "255.255.255.252");
 
-  for (size_t m = 0; m < coord_array.size (); m++)
-    {
-      positionAlloc_n->Add (Vector (coord_array[m][0], coord_array[m][1], 0));
-      Ptr<Node> n0 = nodes.Get (m);
-      Ptr<ConstantPositionMobilityModel> nLoc =  n0->GetObject<ConstantPositionMobilityModel> ();
-      if (nLoc == 0)
-        {
-          nLoc = CreateObject<ConstantPositionMobilityModel> ();
-          n0->AggregateObject (nLoc);
-        }
-      // y-coordinates are negated for correct display in NetAnim
-      // NetAnim's (0,0) reference coordinates are located on upper left corner
-      // by negating the y coordinates, we declare the reference (0,0) coordinate
-      // to the bottom left corner
-      Vector nVec (coord_array[m][0], -coord_array[m][1], 0);
-      nLoc->SetPosition (nVec);
+	NS_LOG_INFO ("Create Links Between Nodes.");
 
-    }
-  mobility_n.SetPositionAllocator (positionAlloc_n);
-  mobility_n.Install (nodes);
+	uint32_t linkCount = 0;
 
-  // ---------- End of Allocate Node Positions -------------------------------
+	for (size_t i = 0; i < Adj_Matrix.size (); i++)
+	{
+		for (size_t j = 0; j < Adj_Matrix[i].size (); j++)
+		{
 
-  // ---------- Create n*(n-1) CBR Flows -------------------------------------
+			if (Adj_Matrix[i][j] == 1)
+			{
+				NodeContainer n_links = NodeContainer (nodes.Get (i), nodes.Get (j));
+				NetDeviceContainer n_devs = p2p.Install (n_links);
+				ipv4_n.Assign (n_devs);
+				ipv4_n.NewNetwork ();
+				linkCount++;
+				NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
+			}
+			else
+			{
+				NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 0");
+			}
+		}
+	}
+	NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
+	NS_LOG_INFO ("Number of all nodes is: " << nodes.GetN ());
 
-  NS_LOG_INFO ("Setup Packet Sinks.");
+	NS_LOG_INFO ("Initialize Global Routing.");
+	Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
 
-  uint16_t port = 9;
+	// ---------- End of Network Set-up ----------------------------------------
 
-  for (int i = 0; i < n_nodes; i++)
-    {
-      PacketSinkHelper sink ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), port));
-      ApplicationContainer apps_sink = sink.Install (nodes.Get (i));   // sink is installed on all nodes
-      apps_sink.Start (Seconds (SinkStartTime));
-      apps_sink.Stop (Seconds (SinkStopTime));
-    }
+	// ---------- Allocate Node Positions --------------------------------------
 
-  NS_LOG_INFO ("Setup CBR Traffic Sources.");
+	NS_LOG_INFO ("Allocate Positions to Nodes.");
 
-  for (int i = 0; i < n_nodes; i++)
-    {
-      for (int j = 0; j < n_nodes; j++)
-        {
-          if (i != j)
-            {
+	MobilityHelper mobility_n;
+	Ptr<ListPositionAllocator> positionAlloc_n = CreateObject<ListPositionAllocator> ();
 
-              // We needed to generate a random number (rn) to be used to eliminate
-              // the artificial congestion caused by sending the packets at the
-              // same time. This rn is added to AppStartTime to have the sources
-              // start at different time, however they will still send at the same rate.
+	for (size_t m = 0; m < coord_array.size (); m++)
+	{
+		positionAlloc_n->Add (Vector (coord_array[m][0], coord_array[m][1], 0));
+		Ptr<Node> n0 = nodes.Get (m);
+		Ptr<ConstantPositionMobilityModel> nLoc =  n0->GetObject<ConstantPositionMobilityModel> ();
+		if (nLoc == 0)
+		{
+			nLoc = CreateObject<ConstantPositionMobilityModel> ();
+			n0->AggregateObject (nLoc);
+		}
+		// y-coordinates are negated for correct display in NetAnim
+		// NetAnim's (0,0) reference coordinates are located on upper left corner
+		// by negating the y coordinates, we declare the reference (0,0) coordinate
+		// to the bottom left corner
+		Vector nVec (coord_array[m][0], -coord_array[m][1], 0);
+		nLoc->SetPosition (nVec);
 
-              Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
-              x->SetAttribute ("Min", DoubleValue (0));
-              x->SetAttribute ("Max", DoubleValue (1));
-              double rn = x->GetValue ();
-              Ptr<Node> n = nodes.Get (j);
-              Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
-              Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
-              Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
-              OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
-              onoff.SetConstantRate (DataRate (AppPacketRate));
-              ApplicationContainer apps = onoff.Install (nodes.Get (i));  // traffic sources are installed on all nodes
-              apps.Start (Seconds (AppStartTime + rn));
-              apps.Stop (Seconds (AppStopTime));
-            }
-        }
-    }
+	}
+	mobility_n.SetPositionAllocator (positionAlloc_n);
+	mobility_n.Install (nodes);
 
-  // ---------- End of Create n*(n-1) CBR Flows ------------------------------
+	// ---------- End of Allocate Node Positions -------------------------------
 
-  // ---------- Simulation Monitoring ----------------------------------------
+	// ---------- Create n*(n-1) CBR Flows -------------------------------------
 
-  NS_LOG_INFO ("Configure Tracing.");
+	NS_LOG_INFO ("Setup Packet Sinks.");
 
-  AsciiTraceHelper ascii;
-  p2p.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
-  // p2p.EnablePcapAll (pcap_name.c_str());
+	uint16_t port = 9;
 
-  Ptr<FlowMonitor> flowmon;
-  FlowMonitorHelper flowmonHelper;
-  flowmon = flowmonHelper.InstallAll ();
+	for (int i = 0; i < n_nodes; i++)
+	{
+		PacketSinkHelper sink ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), port));
+		ApplicationContainer apps_sink = sink.Install (nodes.Get (i));   // sink is installed on all nodes
+		apps_sink.Start (Seconds (SinkStartTime));
+		apps_sink.Stop (Seconds (SinkStopTime));
+	}
 
-  // Configure animator with default settings
+	NS_LOG_INFO ("Setup CBR Traffic Sources.");
 
-  AnimationInterface anim (anim_name.c_str ());
-  char buffer [100];
-  for (int i = 0; i < n_nodes; i++) {
-    if (i== 0) {
-	    snprintf ( buffer, 100, "Core-Switch");
-    } else if (i == 1)  {
-	    snprintf ( buffer, 100, "Agg-Switch1");
-    } else if (i == 2) {
-	    snprintf ( buffer, 100, "Agg-Switch2");
-    } else if (i < 18)
-	    snprintf ( buffer, 100, "R1-%d", i-1);
-    else {
-	    snprintf ( buffer, 100, "R2-%d", i-17);
-    }
-    anim.UpdateNodeDescription(nodes.Get(i), buffer);
-  }
-  NS_LOG_INFO ("Run Simulation.");
+	for (int i = 0; i < n_nodes; i++)
+	{
+		for (int j = 0; j < n_nodes; j++)
+		{
+			if (i != j)
+			{
 
-  Simulator::Stop (Seconds (SimTime));
-  Simulator::Run ();
-  // flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
-  flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
+				// We needed to generate a random number (rn) to be used to eliminate
+				// the artificial congestion caused by sending the packets at the
+				// same time. This rn is added to AppStartTime to have the sources
+				// start at different time, however they will still send at the same rate.
 
-  Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmonHelper.GetClassifier());
-  FlowMonitor::FlowStatsContainer stats = flowmon->GetFlowStats ();
-  double avgLatency_allFlows = 0.0f; double avgThroughput_allFlows = 0.0f; double temp = 0.0; int count = 0;
-  for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator itr = stats.begin (); itr !=  stats.end();  ++itr)  
-  { 
-    if  (itr->first > 0)  
-    { 
-      Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(itr->first); 
-      std::cout <<  "Flow " <<  itr->first  <<  " ("  <<  t.sourceAddress <<  " ->  " <<  t.destinationAddress  <<  ")"; 
-      std::cout << "\t"   << itr->second.rxBytes;
-      std::cout << "\t"   << itr->second.rxPackets; 
-      temp =  itr->second.rxBytes * 8.0 / AppRunTime / 1000  / 1000; avgLatency_allFlows+=temp;
-      std::cout <<  "\t"  <<  temp <<  " Mbps";  
-      temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); avgThroughput_allFlows+=temp;
-      std::cout   <<  "\t"  << temp <<"\n";      
-      count+=1;
-      break;
-    } 
-  }   
-  std::cout<<"\t avgLatency_allFlows "<< (avgLatency_allFlows/count)<<"\t avgThroughput_allFlows "<<(avgThroughput_allFlows/count)<<"\n";
- 
-  Simulator::Destroy ();
+				Ptr<UniformRandomVariable> x = CreateObject<UniformRandomVariable> ();
+				x->SetAttribute ("Min", DoubleValue (0));
+				x->SetAttribute ("Max", DoubleValue (1));
+				double rn = x->GetValue ();
+				Ptr<Node> n = nodes.Get (j);
+				Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+				Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (1, 0);
+				Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+				OnOffHelper onoff ("ns3::UdpSocketFactory", InetSocketAddress (ip_addr, port)); // traffic flows from node[i] to node[j]
+				onoff.SetConstantRate (DataRate (AppPacketRate));
+				ApplicationContainer apps = onoff.Install (nodes.Get (i));  // traffic sources are installed on all nodes
+				apps.Start (Seconds (AppStartTime + rn));
+				apps.Stop (Seconds (AppStopTime));
+			}
+		}
+	}
 
-  // ---------- End of Simulation Monitoring ---------------------------------
+	// ---------- End of Create n*(n-1) CBR Flows ------------------------------
 
-  return 0;
+	// ---------- Simulation Monitoring ----------------------------------------
+
+	NS_LOG_INFO ("Configure Tracing.");
+
+	AsciiTraceHelper ascii;
+	p2p.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
+	// p2p.EnablePcapAll (pcap_name.c_str());
+
+	Ptr<FlowMonitor> flowmon;
+	FlowMonitorHelper flowmonHelper;
+	flowmon = flowmonHelper.InstallAll ();
+
+	// Configure animator with default settings
+
+	AnimationInterface anim (anim_name.c_str ());
+	char buffer [100];
+	for (int i = 0; i < n_nodes; i++) {
+		if (i== 0) {
+			snprintf ( buffer, 100, "Core-Switch");
+		} else if (i == 1)  {
+			snprintf ( buffer, 100, "Agg-Switch1");
+		} else if (i == 2) {
+			snprintf ( buffer, 100, "Agg-Switch2");
+		} else if (i < 18)
+			snprintf ( buffer, 100, "R1-%d", i-1);
+		else {
+			snprintf ( buffer, 100, "R2-%d", i-17);
+		}
+		anim.UpdateNodeDescription(nodes.Get(i), buffer);
+	}
+	NS_LOG_INFO ("Run Simulation.");
+
+	Simulator::Stop (Seconds (SimTime));
+	Simulator::Run ();
+	// flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
+	flowmon->SerializeToXmlFile (flow_name.c_str(), true, true);
+
+	Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmonHelper.GetClassifier());
+	FlowMonitor::FlowStatsContainer stats = flowmon->GetFlowStats ();
+	print_stats(stats, classifier, AppRunTime);
+
+	Simulator::Destroy ();
+
+	// ---------- End of Simulation Monitoring ---------------------------------
+
+	return 0;
 
 }
 
@@ -338,143 +322,143 @@ int main (int argc, char *argv[])
 
 vector<vector<bool> > readNxNMatrix (std::string adj_mat_file_name)
 {
-  ifstream adj_mat_file;
-  cout <<adj_mat_file_name.c_str ()<<endl;
-  adj_mat_file.open (adj_mat_file_name.c_str (), ios::in);
-  if (adj_mat_file.fail ())
-    {
-      NS_FATAL_ERROR ("File " << adj_mat_file_name.c_str () << " not found");
-    }
-  vector<vector<bool> > array;
-  int i = 0;
-  int n_nodes = 0;
+	ifstream adj_mat_file;
+	cout <<adj_mat_file_name.c_str ()<<endl;
+	adj_mat_file.open (adj_mat_file_name.c_str (), ios::in);
+	if (adj_mat_file.fail ())
+	{
+		NS_FATAL_ERROR ("File " << adj_mat_file_name.c_str () << " not found");
+	}
+	vector<vector<bool> > array;
+	int i = 0;
+	int n_nodes = 0;
 
-  while (!adj_mat_file.eof ())
-    {
-      string line;
-      getline (adj_mat_file, line);
-      if (line == "")
-        {
-          NS_LOG_WARN ("WARNING: Ignoring blank row in the array: " << i);
-          break;
-        }
+	while (!adj_mat_file.eof ())
+	{
+		string line;
+		getline (adj_mat_file, line);
+		if (line == "")
+		{
+			NS_LOG_WARN ("WARNING: Ignoring blank row in the array: " << i);
+			break;
+		}
 
-      istringstream iss (line);
-      bool element;
-      vector<bool> row;
-      int j = 0;
+		istringstream iss (line);
+		bool element;
+		vector<bool> row;
+		int j = 0;
 
-      while (iss >> element)
-        {
-          row.push_back (element);
-          j++;
-        }
+		while (iss >> element)
+		{
+			row.push_back (element);
+			j++;
+		}
 
-      if (i == 0)
-        {
-          n_nodes = j;
-        }
+		if (i == 0)
+		{
+			n_nodes = j;
+		}
 
-      if (j != n_nodes )
-        {
-          NS_LOG_ERROR ("ERROR: Number of elements in line " << i << ": " << j << " not equal to number of elements in line 0: " << n_nodes);
-          NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
-        }
-      else
-        {
-          array.push_back (row);
-        }
-      i++;
-    }
+		if (j != n_nodes )
+		{
+			NS_LOG_ERROR ("ERROR: Number of elements in line " << i << ": " << j << " not equal to number of elements in line 0: " << n_nodes);
+			NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
+		}
+		else
+		{
+			array.push_back (row);
+		}
+		i++;
+	}
 
-  if (i != n_nodes)
-    {
-      NS_LOG_ERROR ("There are " << i << " rows and " << n_nodes << " columns.");
-      NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
-    }
+	if (i != n_nodes)
+	{
+		NS_LOG_ERROR ("There are " << i << " rows and " << n_nodes << " columns.");
+		NS_FATAL_ERROR ("ERROR: The number of rows is not equal to the number of columns! in the adjacency matrix");
+	}
 
-  adj_mat_file.close ();
-  return array;
+	adj_mat_file.close ();
+	return array;
 
 }
 
 vector<vector<double> > readCordinatesFile (std::string node_coordinates_file_name)
 {
-  ifstream node_coordinates_file;
-  node_coordinates_file.open (node_coordinates_file_name.c_str (), ios::in);
-  if (node_coordinates_file.fail ())
-    {
-      NS_FATAL_ERROR ("File " << node_coordinates_file_name.c_str () << " not found");
-    }
-  vector<vector<double> > coord_array;
-  int m = 0;
+	ifstream node_coordinates_file;
+	node_coordinates_file.open (node_coordinates_file_name.c_str (), ios::in);
+	if (node_coordinates_file.fail ())
+	{
+		NS_FATAL_ERROR ("File " << node_coordinates_file_name.c_str () << " not found");
+	}
+	vector<vector<double> > coord_array;
+	int m = 0;
 
-  while (!node_coordinates_file.eof ())
-    {
-      string line;
-      getline (node_coordinates_file, line);
+	while (!node_coordinates_file.eof ())
+	{
+		string line;
+		getline (node_coordinates_file, line);
 
-      if (line == "")
-        {
-          NS_LOG_WARN ("WARNING: Ignoring blank row: " << m);
-          break;
-        }
+		if (line == "")
+		{
+			NS_LOG_WARN ("WARNING: Ignoring blank row: " << m);
+			break;
+		}
 
-      istringstream iss (line);
-      double coordinate;
-      vector<double> row;
-      int n = 0;
-      while (iss >> coordinate)
-        {
-          row.push_back (coordinate);
-          n++;
-        }
+		istringstream iss (line);
+		double coordinate;
+		vector<double> row;
+		int n = 0;
+		while (iss >> coordinate)
+		{
+			row.push_back (coordinate);
+			n++;
+		}
 
-      if (n != 2)
-        {
-          NS_LOG_ERROR ("ERROR: Number of elements at line#" << m << " is "  << n << " which is not equal to 2 for node coordinates file");
-          exit (1);
-        }
+		if (n != 2)
+		{
+			NS_LOG_ERROR ("ERROR: Number of elements at line#" << m << " is "  << n << " which is not equal to 2 for node coordinates file");
+			exit (1);
+		}
 
-      else
-        {
-          coord_array.push_back (row);
-        }
-      m++;
-    }
-  node_coordinates_file.close ();
-  return coord_array;
+		else
+		{
+			coord_array.push_back (row);
+		}
+		m++;
+	}
+	node_coordinates_file.close ();
+	return coord_array;
 
 }
 
 void printMatrix (const char* description, vector<vector<bool> > array)
 {
-  cout << "**** Start " << description << "********" << endl;
-  cout <<array.size()<< " " <<array[0].size()<<endl;
-  for (size_t m = 0; m < array.size (); m++)
-    {
-      for (size_t n = 0; n < array[m].size (); n++)
-        {
-          cout << array[m][n] << ' ';
-        }
-      cout << endl;
-    }
-  cout << "**** End " << description << "********" << endl;
+	cout << "**** Start " << description << "********" << endl;
+	cout <<array.size()<< " " <<array[0].size()<<endl;
+	for (size_t m = 0; m < array.size (); m++)
+	{
+		for (size_t n = 0; n < array[m].size (); n++)
+		{
+			cout << array[m][n] << ' ';
+		}
+		cout << endl;
+	}
+	cout << "**** End " << description << "********" << endl;
 
 }
 
 void printCoordinateArray (const char* description, vector<vector<double> > coord_array)
 {
-  cout << "**** Start " << description << "********" << endl;
-  for (size_t m = 0; m < coord_array.size (); m++)
-    {
-      for (size_t n = 0; n < coord_array[m].size (); n++)
-        {
-          cout << coord_array[m][n] << ' ';
-        }
-      cout << endl;
-    }
-  cout << "**** End " << description << "********" << endl;
+	cout << "**** Start " << description << "********" << endl;
+	for (size_t m = 0; m < coord_array.size (); m++)
+	{
+		for (size_t n = 0; n < coord_array[m].size (); n++)
+		{
+			cout << coord_array[m][n] << ' ';
+		}
+		cout << endl;
+	}
+	cout << "**** End " << description << "********" << endl;
 
 }
 
