@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cfloat>
 #include <cstddef>
+#include <math.h>
 
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
@@ -28,9 +29,26 @@ double SinkStopTime   = 8.90001;
 double AppStartTime   = 3.0001;
 double AppStopTime    = 4.00001;
 double AppRunTime = AppStopTime - AppStartTime;
+
+int AppPacketSize = 1000;
+//std::string AppPacketRate ("40Kbps");
+//std::string AppPacketRate ("80Kbps");
 std::string AppPacketRate ("160Kbps");
-int AppPacketSize = 10000;
+//std::string AppPacketRate ("320Kbps");
 std::string LinkRate ("10Mbps");
+
+//std::string AppPacketRate ("400Kbps");
+//std::string AppPacketRate ("800Kbps");
+//std::string AppPacketRate ("1600Kbps");
+//std::string AppPacketRate ("3200Kbps");
+//std::string LinkRate ("100Mbps");
+
+//std::string AppPacketRate ("400Kbps");
+//std::string AppPacketRate ("800Kbps");
+//std::string AppPacketRate ("1600Kbps");
+//std::string AppPacketRate ("3200Kbps");
+//std::string LinkRate ("1000Mbps");
+
 std::string LinkDelay ("2ms");
  
 
@@ -49,10 +67,10 @@ void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> 
 	{ 
 		if  (itr->first > 0)  
 		{ 
-			Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(itr->first); 
-			std::cout <<  "Flow " <<  itr->first  <<  " ("  <<  t.sourceAddress <<  " ->  " <<  t.destinationAddress  <<  ")"; 
-			std::cout << "\t"   << itr->second.rxBytes;
-			std::cout << "\t"   << itr->second.rxPackets; 
+			//Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow(itr->first); 
+			//std::cout <<  "Flow " <<  itr->first  <<  " ("  <<  t.sourceAddress <<  " ->  " <<  t.destinationAddress  <<  ")"; 
+			//std::cout << "\t"   << itr->second.rxBytes;
+			//std::cout << "\t"   << itr->second.rxPackets; 
 			totalPackets += itr->second.rxPackets;
 			lostPackets += itr->second.lostPackets;
 			timesForwarded += itr->second.timesForwarded;
@@ -61,18 +79,21 @@ void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> 
 				maxThroughput = temp;
 			if (temp < minThroughput)
 				minThroughput = temp;
-			std::cout <<  "\t"  <<  temp <<  " Mbps";  
-			temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); avgLatency_allFlows+=temp;
+			//std::cout <<  "\t"  <<  temp <<  " Mbps";  
+			temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); 
+			if(~isnan(temp))
+				avgLatency_allFlows+=temp;
 			if (temp > maxLatency)
 				maxLatency = temp;
 			if (temp < minLatency)
 				minLatency = temp;
-			std::cout   <<  "\t"  << temp <<"\n";      
+			//std::cout   <<  "\t"  << temp <<"\n";      
 			count+=1;
 		} 
 	}   
 	double avgLatency = (avgLatency_allFlows/count);
 	double avgThroughput = (avgThroughput_allFlows/count);
+	std::cout<<"Stats\t"<<AppPacketRate<<"\t"<<LinkRate<<"\t"<<avgLatency<<"\t"<<avgThroughput<<"\t"<<totalPackets<<"\t"<<lostPackets<<"\t"<<timesForwarded<<"\n";
 	printf("Avg latency = %lf, min latency = %lf, max latency = %lf\n", avgLatency, minLatency, maxLatency); 
 	printf("Avg thoughput = %lf, min thoughput = %lf, max thoughput = %lf\n", avgThroughput, minThroughput, maxThroughput); 
 	printf("Total Packets = %ld\n", totalPackets);
