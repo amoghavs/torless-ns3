@@ -83,12 +83,17 @@ int main (int argc, char *argv[])
   double AppStopTime    = 2.80001;*/
 
   double SimTime        = 10.00;
-  double SinkStartTime  = 2.0001;
+  double SinkStartTime  = 3.0001;
   double SinkStopTime   = 8.90001;
-  double AppStartTime   = 3.0001;
+  double AppStartTime   = 4.0001;
   double AppStopTime    = 8.00001;
   double AppRunTime = AppStopTime - AppStartTime;
 
+  Config::SetDefault ("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents", BooleanValue (true));
+  //Config::SetDefault ("ns3::Ipv4GlobalRouting::RandomEcmpRouting", BooleanValue (true));
+  Config::SetDefault("ns3::Ipv4::IpForward", BooleanValue (true));
+  Config::SetDefault("ns3::Ipv4::WeakEsModel", BooleanValue (true));
+  
   std::string AppPacketRate ("40Kbps");
   Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("1000"));
   Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
@@ -180,11 +185,13 @@ int main (int argc, char *argv[])
               ipv4_n.NewNetwork ();
               linkCount++;
               NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 1");
+              std::cout<<"\t i "<<i<<" j "<<j<<" ";
             }
           else
             {
               NS_LOG_INFO ("matrix element [" << i << "][" << j << "] is 0");
             }
+
         }
     }
   NS_LOG_INFO ("Number of links in the adjacency matrix is: " << linkCount);
@@ -194,8 +201,11 @@ int main (int argc, char *argv[])
   std::cout<<" Number of all nodes is: " << nodes.GetN ()<<"\n";
 
   NS_LOG_INFO ("Initialize Global Routing.");
-  Config::SetDefault ("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents", BooleanValue (true));
-  Ipv4GlobalRoutingHelper::PopulateRoutingTables ();
+  Ipv4GlobalRoutingHelper g;
+  Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("topology-matrix.routes", std::ios::out);
+  g.PopulateRoutingTables ();
+  g.PrintRoutingTableAllAt (Seconds (6), routingStream);  
+  
 
   // ---------- End of Network Set-up ----------------------------------------
 
@@ -244,7 +254,6 @@ int main (int argc, char *argv[])
 
       Ptr<Node> n = nodes.Get (i);
       Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();      
-      std::cout<<"\t node "<<i<<"\t n_interfaces "<<ipv4->GetNInterfaces()<<"\n";
     }
 
   NS_LOG_INFO ("Setup CBR Traffic Sources.");
@@ -274,13 +283,22 @@ int main (int argc, char *argv[])
               ApplicationContainer apps = onoff.Install (nodes.Get (i));  // traffic sources are installed on all nodes
               apps.Start (Seconds (AppStartTime + rn));
               apps.Stop (Seconds (AppStopTime));
-              if(j==6)
-                std::cout<<"\t j "<<j<<"\t ip_addr "<<ip_addr<<"\t n_interfaces "<<ipv4->GetNInterfaces()<<"\n";
             }
         }
     }
 
   // ---------- End of Create n*(n-1) CBR Flows ------------------------------
+  for (int i = 0; i < n_nodes; i++){
+    Ptr<Node> n = nodes.Get (i);
+    Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+    int limit = ipv4->GetNInterfaces();
+    for(int j=0;j<limit-1;j++){
+      Ipv4InterfaceAddress ipv4_int_addr = ipv4->GetAddress (j+1, 0);
+      Ipv4Address ip_addr = ipv4_int_addr.GetLocal ();
+      //std::cout<<"i: "<<i<<" j: "<<j<<" ip_addr "<<ip_addr<<"\n";
+      //ipv4->SetForwarding(j,true);
+    }
+  }
 
   // ---------- Simulation Monitoring ----------------------------------------
 
@@ -295,12 +313,12 @@ int main (int argc, char *argv[])
   //uint32_t ipv4ifIndex6 = 1;
 
   std::cout<<"\t Num interfaces - n6 "<<(ipv46->GetNInterfaces())<<"\n";
-  ipv46->SetForwarding(0,true);ipv46->SetForwarding(1,true);ipv46->SetForwarding(2,true);
+  /*ipv46->SetForwarding(0,true);ipv46->SetForwarding(1,true);ipv46->SetForwarding(2,true);
   ipv46->SetForwarding(3,true);ipv46->SetForwarding(4,true);ipv46->SetForwarding(5,true);
-  ipv46->SetForwarding(6,true);ipv46->SetForwarding(7,true);ipv46->SetForwarding(8,true);
+  ipv46->SetForwarding(6,true);ipv46->SetForwarding(7,true);ipv46->SetForwarding(8,true);*/
+
   Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 0);
   Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 1);
-  //Simulator::Schedule (Seconds (2),&Ipv4GlobalRoutingHelper::RecomputeRoutingTables);
 
   /*Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 2);
   Simulator::Schedule (Seconds (1),&Ipv4::SetDown,ipv46, 3);
@@ -335,16 +353,17 @@ int main (int argc, char *argv[])
       std::cout <<  "Flow " <<  itr->first  <<  " ("  <<  t.sourceAddress <<  " ->  " <<  t.destinationAddress  <<  ")"; 
       std::cout << "\t"   << itr->second.rxBytes;
       std::cout << "\t"   << itr->second.rxPackets; 
-      temp =  itr->second.rxBytes * 8.0 / AppRunTime / 1000  / 1000; avgLatency_allFlows+=temp;
+      temp =  itr->second.rxBytes * 8.0 / AppRunTime / 1000  / 1000; avgThroughput_allFlows+=temp;
       std::cout <<  "\t"  <<  temp <<  " Mbps";  
-      temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); avgThroughput_allFlows+=temp;
+      temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); avgLatency_allFlows+=temp;
       std::cout   <<  "\t"  << temp <<"\n";      
       count+=1;
       break;
     } 
   }   
-  std::cout<<"\t avgLatency_allFlows "<< (avgLatency_allFlows/count)<<"\t avgThroughput_allFlows "<<(avgThroughput_allFlows/count)<<"\n";
+  std::cout<<"\t avgThroughput_allFlows "<<(avgThroughput_allFlows/count)<<"\t avgLatency_allFlows "<< (avgLatency_allFlows/count)<<"\n";
   Simulator::Destroy ();
+
 
   // ---------- End of Simulation Monitoring ---------------------------------
 

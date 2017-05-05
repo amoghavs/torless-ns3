@@ -50,8 +50,6 @@ std::string LinkRate ("10Mbps");
 //std::string LinkRate ("1000Mbps");
 
 std::string LinkDelay ("2ms");
- 
-
 
 void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> classifier, double AppRunTime)
 {

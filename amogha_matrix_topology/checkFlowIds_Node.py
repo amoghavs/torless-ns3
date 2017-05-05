@@ -2,12 +2,13 @@
 
 import sys,commands
 
+xmlFile = sys.argv[1]
 ipAddresses = ["10.0.0.42","10.0.0.74","10.0.0.105","10.0.0.109"]
 toCheckFlows = {}
 
 print "\t Now checking for source addresses.. "
 for curIpAddress in ipAddresses:
-    megaCmd = "grep "+str(curIpAddress)+" n-node-ppp.xml | awk '{if($3==\"sourceAddress=\\\""+str(curIpAddress)+"\\\"\") print}' | awk '{print $2}' | perl -pe 's/=\"/ /g' | perl -pe 's/\"//g' | awk '{print $2}' > blah.log"
+    megaCmd = "grep "+str(curIpAddress)+" "+str(xmlFile)+"  | awk '{if($3==\"sourceAddress=\\\""+str(curIpAddress)+"\\\"\") print}' | awk '{print $2}' | perl -pe 's/=\"/ /g' | perl -pe 's/\"//g' | awk '{print $2}' > blah.log"
     flowIdOutputs = commands.getoutput(megaCmd)
 
     flowFile = open("blah.log","r")
@@ -23,7 +24,7 @@ for curFlowId in toCheckFlows:
 print "\t Now checking for destination addresses.. "
 toCheckFlows = {}
 for curIpAddress in ipAddresses:
-    megaCmd = "grep "+str(curIpAddress)+" n-node-ppp.xml | awk '{if($4==\"destinationAddress=\\\""+str(curIpAddress)+"\\\"\") print}' | awk '{print $2}' | perl -pe 's/=\"/ /g' | perl -pe 's/\"//g' | awk '{print $2}' > blah.log"
+    megaCmd = "grep "+str(curIpAddress)+" "+str(xmlFile)+"  | awk '{if($4==\"destinationAddress=\\\""+str(curIpAddress)+"\\\"\") print}' | awk '{print $2}' | perl -pe 's/=\"/ /g' | perl -pe 's/\"//g' | awk '{print $2}' > blah.log"
     flowIdOutputs = commands.getoutput(megaCmd)
 
     flowFile = open("blah.log","r")
@@ -36,7 +37,7 @@ for curIpAddress in ipAddresses:
         #toCheckFlows[flowId] = curIpAddress
     flowFile.close()
 
-    megaCmd = "grep "+str(curIpAddress)+" n-node-ppp.xml | awk '{if($4==\"destinationAddress=\\\""+str(curIpAddress)+"\\\"\") print}' | awk '{print $2\"\\t\"$3}' | perl -pe 's/=\"/ /g' | perl -pe 's/\"//g' | awk '{print $2\"\\t\"$4}' > blah1.log"
+    megaCmd = "grep "+str(curIpAddress)+" "+str(xmlFile)+"  | awk '{if($4==\"destinationAddress=\\\""+str(curIpAddress)+"\\\"\") print}' | awk '{print $2\"\\t\"$3}' | perl -pe 's/=\"/ /g' | perl -pe 's/\"//g' | awk '{print $2\"\\t\"$4}' > blah1.log"
     commands.getoutput(megaCmd)
     flowFile = open("blah1.log","r")
     for curLine in flowFile.readlines():
