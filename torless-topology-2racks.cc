@@ -276,12 +276,8 @@ int main (int argc, char *argv[])
 		char buffer [100];
 		for (int i = 0; i < n_nodes; i++) {
 				if (i== 0) {
-						snprintf ( buffer, 100, "Core-Switch");
-				} else if (i == 1)  {
-						snprintf ( buffer, 100, "Agg-Switch1");
-				} else if (i == 17) {
-						snprintf ( buffer, 100, "Agg-Switch2");
-				} else if (i < 17)
+						snprintf ( buffer, 100, "Agg-Switch");
+				} else if (i < 16)
 						snprintf ( buffer, 100, "R1-%d", i-1);
 				else {
 						snprintf ( buffer, 100, "R2-%d", i-17);
