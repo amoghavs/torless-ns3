@@ -29,6 +29,7 @@ double SinkStopTime   = 8.90001;
 double AppStartTime   = 3.0001;
 double AppStopTime    = 4.00001;
 double AppRunTime = AppStopTime - AppStartTime;
+int NumLinkFailures = 0;
 
 int AppPacketSize = 1000;
 //std::string AppPacketRate ("40Kbps");

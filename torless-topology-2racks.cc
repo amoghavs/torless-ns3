@@ -288,8 +288,8 @@ int main (int argc, char *argv[])
 	}*/
 
 	/*Monte Carlo Link Failure Simulation with fixed num failures*/
-	int num_of_failures = 10;
-	for(int k=0; k < num_of_failures; k++) {
+	//int num_of_failures = 10;
+	for(int k=0; k < NumLinkFailures; k++) {
 		int i = rand() % n_nodes;
 		Ptr<Node> n = nodes.Get (i);
 		Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
