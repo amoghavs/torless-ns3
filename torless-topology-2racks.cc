@@ -79,6 +79,10 @@ int main (int argc, char *argv[])
 
 		Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("2000"));
 		Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (AppPacketRate));
+		Config::SetDefault ("ns3::Ipv4GlobalRouting::RespondToInterfaceEvents", BooleanValue (true));
+		Config::SetDefault ("ns3::Ipv4GlobalRouting::RandomEcmpRouting", BooleanValue (true));
+		Config::SetDefault("ns3::Ipv4::IpForward", BooleanValue (true));
+		Config::SetDefault("ns3::Ipv4::WeakEsModel", BooleanValue (true));
 		//  DropTailQueue::MaxPackets affects the # of dropped packets, default value:100
 		//  Config::SetDefault ("ns3::DropTailQueue::MaxPackets", UintegerValue (1000));
 
@@ -265,6 +269,37 @@ int main (int argc, char *argv[])
 		AsciiTraceHelper ascii;
 		p2p.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
 		// p2p.EnablePcapAll (pcap_name.c_str());
+
+		/*Monte Carlo Link Failure Simulation with randomness*/
+		/*for (int i = 0; i < n_nodes; i++) {
+			Ptr<Node> n = nodes.Get (i);
+			Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+			int limit = ipv4->GetNInterfaces();
+			for(int j=1;j<limit-1;j++){
+				int seconds = rand() % int(SimTime-2) + 1;
+				int prob = rand() % 100;
+				int fail_prob = 20;
+				if(prob<fail_prob) {
+					std::cout<<"Scheduling link down for node " <<i <<
+							" port " <<j<<" at " <<seconds<<"s.\n";
+					Simulator::Schedule (Seconds(seconds),&Ipv4::SetDown,ipv4, j);
+				}
+			}
+		}*/
+
+		/*Monte Carlo Link Failure Simulation with fixed num failures*/
+		int num_of_failures = 10;
+		for(int k=0; k < num_of_failures; k++) {
+			int i = rand() % n_nodes;
+			Ptr<Node> n = nodes.Get (i);
+			Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+			int limit = ipv4->GetNInterfaces();
+			int j = rand() % (limit-1) + 1;
+			int seconds = rand() % int(SimTime-2) + 1;
+			std::cout<<"Scheduling link down for node " <<i <<
+						" port " <<j<<" at " <<seconds<<"s.\n";
+			Simulator::Schedule (Seconds(seconds),&Ipv4::SetDown,ipv4, j);
+		}
 
 		Ptr<FlowMonitor> flowmon;
 		FlowMonitorHelper flowmonHelper;
