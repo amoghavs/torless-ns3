@@ -279,13 +279,18 @@ int main (int argc, char *argv[])
 
 	/*Monte Carlo Link Failure Simulation with fixed num failures*/
 	//int num_of_failures = 10;
+	/*Set the seed here*/
+	srand(10);
+
 	for(int k=0; k < NumLinkFailures; k++) {
-		int i = rand() % n_nodes;
+		int i = rand() % (n_nodes-2); //nodes-2 is to have consistent rand numbers across tor and torless
 		Ptr<Node> n = nodes.Get (i);
 		Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
 		int limit = ipv4->GetNInterfaces();
 		int j = rand() % (limit-1) + 1;
-		int seconds = rand() % int(SimTime-2) + 1;
+		//int seconds = rand() % int(SimTime-2) + 1;
+		float r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/AppRunTime));
+		double seconds = AppStartTime + r;
 		std::cout<<"Scheduling link down for node " <<i <<
 					" port " <<j<<" at " <<seconds<<"s.\n";
 		Simulator::Schedule (Seconds(seconds),&Ipv4::SetDown,ipv4, j);

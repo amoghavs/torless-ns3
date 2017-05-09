@@ -290,6 +290,9 @@ int main (int argc, char *argv[])
 
 	/*Monte Carlo Link Failure Simulation with fixed num failures*/
 	//int num_of_failures = 10;
+	/*Set the seed here*/
+	srand(10);
+
 	for(int k=0; k < NumLinkFailures; k++) {
 		int i = rand() % n_nodes;
 		Ptr<Node> n = nodes.Get (i);
