@@ -140,6 +140,10 @@ int main (int argc, char *argv[])
 	p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
 	p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
+	PointToPointHelper p2p_tor_uplink;
+	p2p_tor_uplink.SetDeviceAttribute ("DataRate", StringValue (TorUPLinkRate));
+	p2p_tor_uplink.SetChannelAttribute ("Delay", StringValue (LinkDelay));
+
 	NS_LOG_INFO ("Install Internet Stack to Nodes.");
 
 	InternetStackHelper internet;
@@ -162,7 +166,12 @@ int main (int argc, char *argv[])
 			if (Adj_Matrix[i][j] == 1)
 			{
 				NodeContainer n_links = NodeContainer (nodes.Get (i), nodes.Get (j));
-				NetDeviceContainer n_devs = p2p.Install (n_links);
+				NetDeviceContainer n_devs;
+				if (i == 0 || j == 0) {
+					n_devs = p2p_tor_uplink.Install (n_links);
+				} else {
+					n_devs = p2p.Install (n_links);
+				}
 				ipv4_n.Assign (n_devs);
 				ipv4_n.NewNetwork ();
 				linkCount++;
@@ -265,6 +274,7 @@ int main (int argc, char *argv[])
 
 	AsciiTraceHelper ascii;
 	p2p.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
+	p2p_tor_uplink.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
 	// p2p.EnablePcapAll (pcap_name.c_str());
 
 	Ptr<FlowMonitor> flowmon;
