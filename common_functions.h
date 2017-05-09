@@ -18,7 +18,7 @@
 #include "ns3/mobility-module.h"
 #include "ns3/netanim-module.h"
 #include "ns3/assert.h"
-#include "ns3/ipv4-global-routing-helper.h"
+#include "ns3/ipv4-global-routing-helper.h"	
 #include "ns3/flow-monitor-module.h"
 
 using namespace std;
@@ -29,7 +29,7 @@ double SinkStopTime   = 8.90001;
 double AppStartTime   = 3.0001;
 double AppStopTime    = 4.00001;
 double AppRunTime = AppStopTime - AppStartTime;
-int NumLinkFailures = 0;
+int NumLinkFailures = 10;
 
 int AppPacketSize = 1000;
 //std::string AppPacketRate ("40Kbps");
@@ -82,7 +82,7 @@ void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> 
 				minThroughput = temp;
 			//std::cout <<  "\t"  <<  temp <<  " Mbps";  
 			temp = (itr->second.delaySum.GetNanoSeconds()) / (float(itr->second.rxPackets)*1000*1000); 
-			if(~isnan(temp))
+			if(/*~isnan(temp) && */(!(temp != temp)))
 				avgLatency_allFlows+=temp;
 			if (temp > maxLatency)
 				maxLatency = temp;
@@ -97,7 +97,7 @@ void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> 
 	std::cout<<"Stats\t"<<AppPacketRate<<"\t"<<LinkRate<<"\t"<<avgLatency<<"\t"<<avgThroughput<<"\t"<<totalPackets<<"\t"<<lostPackets<<"\t"<<timesForwarded<<"\n";
 	printf("Avg latency = %lf, min latency = %lf, max latency = %lf\n", avgLatency, minLatency, maxLatency); 
 	printf("Avg thoughput = %lf, min thoughput = %lf, max thoughput = %lf\n", avgThroughput, minThroughput, maxThroughput); 
-	printf("Total Packets = %ld\n", totalPackets);
+	printf("Total RxPackets = %ld\n", totalPackets);
 	printf("Lost Packets = %ld\n", lostPackets);
 	printf("Times forwarded = %ld\n", timesForwarded);
 }
