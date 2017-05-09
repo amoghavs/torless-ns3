@@ -277,6 +277,20 @@ int main (int argc, char *argv[])
 	p2p_tor_uplink.EnableAsciiAll (ascii.CreateFileStream (tr_name.c_str ()));
 	// p2p.EnablePcapAll (pcap_name.c_str());
 
+	/*Monte Carlo Link Failure Simulation with fixed num failures*/
+	//int num_of_failures = 10;
+	for(int k=0; k < NumLinkFailures; k++) {
+		int i = rand() % n_nodes;
+		Ptr<Node> n = nodes.Get (i);
+		Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
+		int limit = ipv4->GetNInterfaces();
+		int j = rand() % (limit-1) + 1;
+		int seconds = rand() % int(SimTime-2) + 1;
+		std::cout<<"Scheduling link down for node " <<i <<
+					" port " <<j<<" at " <<seconds<<"s.\n";
+		Simulator::Schedule (Seconds(seconds),&Ipv4::SetDown,ipv4, j);
+	}
+
 	Ptr<FlowMonitor> flowmon;
 	FlowMonitorHelper flowmonHelper;
 	flowmon = flowmonHelper.InstallAll ();

@@ -141,6 +141,7 @@ int main (int argc, char *argv[])
 
 	PointToPointHelper p2p;
 	p2p.SetDeviceAttribute ("DataRate", StringValue (LinkRate));
+	p2p.SetDeviceAttribute ("InterframeGap", StringValue (InterFrameGap));
 	p2p.SetChannelAttribute ("Delay", StringValue (LinkDelay));
 
 	NS_LOG_INFO ("Install Internet Stack to Nodes.");

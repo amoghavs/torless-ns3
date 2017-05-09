@@ -52,6 +52,7 @@ std::string TorUPLinkRate ("100Mbps");
 //std::string LinkRate ("1000Mbps");
 
 std::string LinkDelay ("2ms");
+std::string InterFrameGap ("100us");
 
 void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> classifier, double AppRunTime)
 {
