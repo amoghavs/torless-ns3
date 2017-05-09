@@ -296,7 +296,9 @@ int main (int argc, char *argv[])
 		Ptr<Ipv4> ipv4 = n->GetObject<Ipv4> ();
 		int limit = ipv4->GetNInterfaces();
 		int j = rand() % (limit-1) + 1;
-		int seconds = rand() % int(SimTime-2) + 1;
+		//int seconds = rand() % int(SimTime-2) + 1;
+		float r = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/AppRunTime));
+		double seconds = AppStartTime + r;
 		std::cout<<"Scheduling link down for node " <<i <<
 					" port " <<j<<" at " <<seconds<<"s.\n";
 		Simulator::Schedule (Seconds(seconds),&Ipv4::SetDown,ipv4, j);
