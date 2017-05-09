@@ -33,9 +33,10 @@ double AppRunTime = AppStopTime - AppStartTime;
 int AppPacketSize = 1000;
 //std::string AppPacketRate ("40Kbps");
 //std::string AppPacketRate ("80Kbps");
-std::string AppPacketRate ("160Kbps");
-//std::string AppPacketRate ("320Kbps");
+//std::string AppPacketRate ("160Kbps");
+std::string AppPacketRate ("200Kbps");
 std::string LinkRate ("10Mbps");
+std::string TorUPLinkRate ("100Mbps");
 
 //std::string AppPacketRate ("400Kbps");
 //std::string AppPacketRate ("800Kbps");
