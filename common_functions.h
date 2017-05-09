@@ -29,7 +29,7 @@ double SinkStopTime   = 8.90001;
 double AppStartTime   = 3.0001;
 double AppStopTime    = 4.00001;
 double AppRunTime = AppStopTime - AppStartTime;
-int NumLinkFailures = 10;
+int NumLinkFailures = 4;
 
 int AppPacketSize = 1000;
 //std::string AppPacketRate ("40Kbps");
@@ -51,8 +51,11 @@ std::string TorUPLinkRate ("100Mbps");
 //std::string AppPacketRate ("3200Kbps");
 //std::string LinkRate ("1000Mbps");
 
-std::string LinkDelay ("2ms");
-std::string InterFrameGap ("100us");
+std::string LinkDelay ("5us");
+/*This is for h/w version*/
+std::string InterFrameGap ("0.5us");
+/*This is for s/w version*/
+//std::string InterFrameGap ("3.6us");
 
 void print_stats(FlowMonitor::FlowStatsContainer stats, Ptr<Ipv4FlowClassifier> classifier, double AppRunTime)
 {
